@@ -7,6 +7,10 @@ import (
 	dockerapi "github.com/fsouza/go-dockerclient"
 )
 
+type LocalServiceDiscovery interface {
+	SetLocalDiscoveryUrl(url *url.URL)
+}
+
 type AdapterFactory interface {
 	New(uri *url.URL) RegistryAdapter
 }
@@ -30,6 +34,7 @@ type Config struct {
 	DeregisterCheck string
 	Cleanup         bool
 	Exclude         []string
+	LocalDiscovery  string
 }
 
 type Service struct {

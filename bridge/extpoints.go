@@ -124,12 +124,18 @@ func (ep *adapterFactoryExt) Register(component AdapterFactory, name string) boo
 	return ep.register(component, name)
 }
 
-func (ep *adapterFactoryExt) Lookup(name string) (AdapterFactory, bool) {
+func (ep *adapterFactoryExt) Lookup(name string) (AdapterFactory, bool, LocalServiceDiscovery, bool) {
 	ext, ok := ep.lookup(name)
 	if !ok {
-		return nil, ok
+		return nil, ok, nil, false
 	}
-	return ext.(AdapterFactory), ok
+    
+	//判断是否有注册本地服务功能
+	localDiscovery, localOk := ext.(LocalServiceDiscovery)
+	if !localOk {
+		localDiscovery = nil
+	}
+	return ext.(AdapterFactory), ok, localDiscovery, localOk 
 }
 
 func (ep *adapterFactoryExt) All() map[string]AdapterFactory {

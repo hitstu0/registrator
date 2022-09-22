@@ -31,9 +31,19 @@ func New(docker *dockerapi.Client, adapterUri string, config Config) (*Bridge, e
 	if err != nil {
 		return nil, errors.New("bad adapter uri: " + adapterUri)
 	}
-	factory, found := AdapterFactories.Lookup(uri.Scheme)
+	//AdapterFactory负责将factory转化为对应的接口
+	factory, found, localDiscovery, enable := AdapterFactories.Lookup(uri.Scheme)
 	if !found {
 		return nil, errors.New("unrecognized adapter: " + adapterUri)
+	}
+    
+	//处理localDiscovery情况
+	if enable && config.LocalDiscovery != "" {
+       localDiscoveryUri, err := url.Parse(config.LocalDiscovery)
+	   if err != nil {
+		   return nil, errors.New("bad localDiscovery uri: " + config.LocalDiscovery)
+	   }
+	   localDiscovery.SetLocalDiscoveryUrl(localDiscoveryUri)
 	}
 
 	log.Println("Using", uri.Scheme, "adapter:", uri)

@@ -30,8 +30,15 @@ func (r *ConsulAdapter) interpolateService(script string, service *bridge.Servic
 
 type Factory struct{}
 
+var localUrl *url.URL
+func (f *Factory) SetLocalDiscoveryUrl(url *url.URL) {
+     localUrl = url
+}
+
 func (f *Factory) New(uri *url.URL) bridge.RegistryAdapter {
 	config := consulapi.DefaultConfig()
+	localConfig := consulapi.DefaultConfig()
+
 	if uri.Scheme == "consul-unix" {
 		config.Address = strings.TrimPrefix(uri.String(), "consul-")
 	} else if uri.Scheme == "consul-tls" {
@@ -53,16 +60,23 @@ func (f *Factory) New(uri *url.URL) bridge.RegistryAdapter {
 		config.Address = uri.Host
 	} else if uri.Host != "" {
 		config.Address = uri.Host
+		localConfig.Address = localUrl.Host
 	}
+
 	client, err := consulapi.NewClient(config)
+	localClient, err := consulapi.NewClient(localConfig)
 	if err != nil {
 		log.Fatal("consul: ", uri.Scheme)
 	}
-	return &ConsulAdapter{client: client}
+	return &ConsulAdapter{
+		client: client,
+		localClient: localClient,
+	}
 }
 
 type ConsulAdapter struct {
 	client *consulapi.Client
+	localClient *consulapi.Client
 }
 
 // Ping will try to connect to consul by attempting to retrieve the current leader.
@@ -86,6 +100,8 @@ func (r *ConsulAdapter) Register(service *bridge.Service) error {
 	registration.Address = service.IP
 	registration.Check = r.buildCheck(service)
 	registration.Meta = service.Attrs
+
+	r.localClient.Agent().ServiceRegister(registration)
 	return r.client.Agent().ServiceRegister(registration)
 }
 
@@ -149,6 +165,7 @@ func (r *ConsulAdapter) buildCheck(service *bridge.Service) *consulapi.AgentServ
 }
 
 func (r *ConsulAdapter) Deregister(service *bridge.Service) error {
+	r.localClient.Agent().ServiceDeregister(service.ID)
 	return r.client.Agent().ServiceDeregister(service.ID)
 }
 

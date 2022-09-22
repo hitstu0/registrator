@@ -20,8 +20,8 @@ var Version string
 var versionChecker = usage.NewChecker("registrator", Version)
 
 var excludeArray arrayFlags //保存排除信息
-var localConsul string //保存本地consul 地址
 
+var localDiscovery = flag.String("localDiscovery", "", "add local discovery")
 var hostIp = flag.String("ip", "", "IP for ports mapped to the host")
 var internal = flag.Bool("internal", false, "Use internal ports instead of published ones")
 var explicit = flag.Bool("explicit", false, "Only register containers which have SERVICE_NAME label set")
@@ -118,6 +118,7 @@ func main() {
 		DeregisterCheck: *deregister,
 		Cleanup:         *cleanup,
 		Exclude:         excludeArray,
+		LocalDiscovery:  *localDiscovery,
 	})
 
 	assert(err)
