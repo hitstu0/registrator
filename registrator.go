@@ -19,6 +19,9 @@ var Version string
 
 var versionChecker = usage.NewChecker("registrator", Version)
 
+var excludeArray arrayFlags //保存排除信息
+var localConsul string //保存本地consul 地址
+
 var hostIp = flag.String("ip", "", "IP for ports mapped to the host")
 var internal = flag.Bool("internal", false, "Use internal ports instead of published ones")
 var explicit = flag.Bool("explicit", false, "Only register containers which have SERVICE_NAME label set")
@@ -57,6 +60,8 @@ func main() {
 		fmt.Fprintf(os.Stderr, "  %s [options] <registry URI>\n\n", os.Args[0])
 		flag.PrintDefaults()
 	}
+    
+    flag.Var(&excludeArray, "exclude", "Exclude Contains which Name constain strings")
 
 	flag.Parse()
 
@@ -81,7 +86,7 @@ func main() {
 	} else if *refreshTtl > 0 && *refreshTtl <= *refreshInterval {
 		assert(errors.New("-ttl must be greater than -ttl-refresh"))
 	}
-
+ 
 	if *retryInterval <= 0 {
 		assert(errors.New("-retry-interval must be greater than 0"))
 	}
@@ -112,6 +117,7 @@ func main() {
 		RefreshInterval: *refreshInterval,
 		DeregisterCheck: *deregister,
 		Cleanup:         *cleanup,
+		Exclude:         excludeArray,
 	})
 
 	assert(err)
@@ -187,3 +193,6 @@ func main() {
 	close(quit)
 	log.Fatal("Docker event loop closed") // todo: reconnect?
 }
+
+
+

@@ -29,6 +29,7 @@ type Config struct {
 	RefreshInterval int
 	DeregisterCheck string
 	Cleanup         bool
+	Exclude         []string
 }
 
 type Service struct {

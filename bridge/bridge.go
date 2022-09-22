@@ -236,6 +236,20 @@ func (b *Bridge) add(containerId string, quiet bool) {
 			}
 			continue
 		}
+ 
+		//judge if excluded
+		var excluded bool
+		for _, value := range b.config.Exclude {
+		    if contain := strings.Contains(service.Name, value); contain {
+                log.Printf("serviceName: %s, contains exclude value: %s,ignored", service.Name, value)
+				excluded = true
+				break
+			}
+		}
+		if excluded {
+			continue
+		}
+
 		err := b.registry.Register(service)
 		if err != nil {
 			log.Println("register failed:", service, err)
